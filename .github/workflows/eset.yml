@@ -28,7 +28,7 @@ on:
           - inboxes
           - incognitomail
           - emailfake
-        default: emailfake
+        default: fakemail
       key_type:
         description: 'Modes of operation'
         required: true
