@@ -1,12 +1,11 @@
 <div align="center">
-
   <img src="https://github.com/shadowcopyrz/etkg/blob/main/img/logo_alt.png?raw=true" alt="logo"/>
     
-  ![Version](https://img.shields.io/badge/version-1.5.6.1-gold)
+  ![Version](https://img.shields.io/badge/version-1.5.6.3-gold)
   
   [![Commit activity](https://img.shields.io/github/commit-activity/t/shadowcopyrz/etkg/main?cacheSeconds=0)](https://github.com/shadowcopyrz/etkg/commits/main)
   ![Last commit](https://img.shields.io/github/last-commit/shadowcopyrz/etkg/main?cacheSeconds=0)
-  ![Last test](https://img.shields.io/badge/last_test-12.10.2025_03:52_UTC+3-blue)
+  ![Last test](https://img.shields.io/badge/last_test-13.03.2026_05:08_UTC+3-blue)
   [![Opened issues](https://img.shields.io/github/issues/shadowcopyrz/etkg?color=darkred)](https://github.com/shadowcopyrz/etkg/issues?cacheSeconds=0)
   [![Closed issues](https://img.shields.io/github/issues-closed/shadowcopyrz/etkg?color=darkgreen&cacheSeconds=0)](https://github.com/shadowcopyrz/etkg/issues?q=is%3Aissue+is%3Aclosed)
   ![License](https://img.shields.io/github/license/shadowcopyrz/etkg)
@@ -40,7 +39,7 @@ My [public channel with archives of my projects](https://t.me/rzc0d3r_official)
 
 ---
 ## Project Status 
-- Current Status: Active development
+- Current Status: Active
 
 ## Known Errors
 - **Almost all Email APIs have been blocked by ESET!!!** Recommended to use ```emailfake```, ```inboxes``` and also use the ```--custom-email-api``` argument!

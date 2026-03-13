@@ -85,8 +85,7 @@ class EsetRegister(object):
 
     def confirmAccount(self):
         uCE = untilConditionExecute
-        #uCE(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBAV}("ion-button", "data-r", "account-verification-email-modal-resend-email-btn"))') # accelerating the receipt of an eset token
-        
+
         if isinstance(self.email_obj, CustomEmailAPI):
             token = parseToken(self.email_obj, max_iter=100, delay=3)
         else:
@@ -109,6 +108,7 @@ class EsetRegister(object):
             self.driver.get(f'https://login.eset.com/link/confirmregistration?token={token}')
             uCE(self.driver, 'return document.title.includes("ESET HOME")')
             uCE(self.driver, f'return {GET_EBCN}("verification-email_p").length === 0')
+            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'onboarding-welcome-skip-introduction-btn'))")
         logging.info('Account successfully confirmed!')
         console_log('Account successfully confirmed!', OK, silent_mode=SILENT_MODE)
         return True
@@ -124,33 +124,23 @@ class EsetKeygen(object):
     def sendRequestForKey(self):
         uCE = untilConditionExecute
 
-        logging.info(f'[{self.mode}] Request sending...')
-        console_log(f'\n[{self.mode}] Request sending...', INFO, silent_mode=SILENT_MODE)
-        self.driver.get('https://home.eset.com/subscriptions/choose-trial')
-        uCE(self.driver, f"return {GET_EBAV}('button', 'data-label', 'subscription-choose-trial-ehsp-card-button') != null")
+        logging.info(f'[{self.mode}] Sending request and waiting for response...')
+        console_log(f'\n[{self.mode}] Sending request and waiting for response...', INFO, silent_mode=SILENT_MODE)
+
+        uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'onboarding-welcome-skip-introduction-btn'))")
+        uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('label', 'data-label', 'onboarding-add-subscription-protect-card-trial'))")
+        self.__press_button_with_text('continue')
+    
+        uCE(self.driver, f"return {GET_EBAV}('label', 'data-label', 'onboarding-trial-protect-card-148') != null")
         if self.mode == 'ESET HOME':
-            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'subscription-choose-trial-ehsp-card-button'))")
+            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('label', 'data-label', 'onboarding-trial-protect-card-148'))")
         elif self.mode == 'SMALL BUSINESS':
-            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'subscription-choose-trial-esbs-card-button'))")
+            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('label', 'data-label', 'onboarding-trial-protect-card-172'))")
         try:
-            for button in self.driver.find_elements('tag name', 'button'):
-                if button.get_attribute('innerText').strip().lower() == 'continue':
-                    button.click()
-                    break
-                time.sleep(0.05)
-            else:
-                raise RuntimeError('Continue button error!')
-            uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'subscription-choose-trial-esbs-card-button'))")
-            time.sleep(1)
-            for button in self.driver.find_elements('tag name', 'button'):
-                if button.get_attribute('innerText').strip().lower() == 'continue':
-                    button.click()
-                    break
-                time.sleep(0.05)
-            else:
-                raise RuntimeError('Continue button error!')
-            logging.info(f'[{self.mode}] Request successfully sent!')
-            console_log(f'[{self.mode}] Request successfully sent!', OK, silent_mode=SILENT_MODE)
+            self.__press_button_with_text('continue')
+            uCE(self.driver, f"return {GET_EBAV}('div', 'data-label', 'onboarding-trial-subscription-card') != null")
+            logging.info(f'[{self.mode}] Response successfully received!')
+            console_log(f'[{self.mode}] Response successfully received!', OK, silent_mode=SILENT_MODE)
         except:
             raise RuntimeError('Request sending error!!!')
 
@@ -159,7 +149,34 @@ class EsetKeygen(object):
         uCE = untilConditionExecute
         logging.info(f'License uploads...')
         console_log('\nLicense uploads...', INFO, silent_mode=SILENT_MODE)
-        uCE(self.driver, f"return {GET_EBAV}('div', 'data-label', 'license-detail-info') != null", raise_exception_if_failed=False)
+
+        # upd 21.10.2025
+        time.sleep(0.5)
+        self.__press_button_with_text('continue')
+        uCE(self.driver, f"return {GET_EBAV}('input', 'data-label', 'member-add-account-owner-input-input') != null")
+        try:
+            input_field = exec_js(f"return {GET_EBAV}('input', 'data-label', 'member-add-account-owner-input-input')")
+            input_field.send_keys(dataGenerator(random.randint(6, 12)))
+        except:
+            raise RuntimeError('Error when filling out form!!!')
+        
+        time.sleep(0.5)
+        self.__press_button_with_text('continue')
+        uCE(self.driver, f"return {GET_EBAV}('span', 'data-identifier', 'ec.status.check') != null")
+        time.sleep(0.5)
+        self.__press_button_with_text('continue')
+
+        uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('label', 'data-label', 'onboarding-members-me-option'))")
+        self.__press_button_with_text('continue')
+
+        uCE(self.driver, f"return {GET_EBAV}('button', 'data-label', 'onboarding-protect-this-device-card') != null")
+        self.__press_button_with_text('finish for now')
+        time.sleep(0.5)
+
+        # base
+        self.driver.get('https://home.eset.com/subscriptions')
+        uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('button', 'data-label', 'license-list-open-detail-page-btn'))")
+        uCE(self.driver, f"return {CLICK_WITH_BOOL}({GET_EBAV}('div', 'data-label', 'license-detail-info'))", raise_exception_if_failed=False)
         if self.driver.current_url.find('detail') != -1:
             logging.info(f'License ID: {self.driver.current_url[-11:]}')
             console_log(f'License ID: {self.driver.current_url[-11:]}', OK, silent_mode=SILENT_MODE)
@@ -173,53 +190,22 @@ class EsetKeygen(object):
         console_log('Information successfully received!', OK, silent_mode=SILENT_MODE)
         return license_name, license_key, license_out_date
 
-class EsetVPN(object):
-    def __init__(self, registered_email_obj: OneSecEmailAPI, driver: Chrome, EsetRegister_window_handle=None):
-        self.email_obj = registered_email_obj
-        self.driver = driver
-        self.window_handle = EsetRegister_window_handle
-        
-    def sendRequestForVPNCodes(self):
-        exec_js = self.driver.execute_script
-        uCE = untilConditionExecute
-        
-        logging.info('Sending a request for VPN subscriptions...')
-        console_log('\nSending a request for VPN subscriptions...', INFO, silent_mode=SILENT_MODE)
-        self.driver.get("https://home.eset.com/security-features")
-        try:
-            uCE(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBAV}("button", "data-label", "security-feature-explore-button"))', max_iter=10)
-        except:
-            raise RuntimeError('Explore-feature-button error!')
-        time.sleep(0.5)
-        for profile in exec_js(f'return {GET_EBAV}("button", "data-label", "choose-profile-tile-button", -1)'): # choose Me profile
-            if profile.get_attribute("innerText").find(self.email_obj.email) != -1: # Me profile contains an email address
-                profile.click()
-        uCE(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBAV}("button", "data-label", "choose-profile-continue-btn"))', max_iter=5)
-        uCE(self.driver, f'return {GET_EBAV}("button", "data-label", "choose-device-counter-increment-button") != null', max_iter=10)
-        for _ in range(9): # increasing 'Number of devices' (to 10)
-            exec_js(f'{GET_EBAV}("button", "data-label", "choose-device-counter-increment-button").click()')
-        exec_js(f'{GET_EBAV}("button", "data-label", "choose-device-count-submit-button").click()')
-        uCE(self.driver, f'return {GET_EBAV}("button", "data-label", "pwm-instructions-sent-download-button") != null', max_iter=15)
-        logging.info('Request successfully sent!')
-        console_log('Request successfully sent!', OK, silent_mode=SILENT_MODE)
-        return True
-    
-    def getVPNCodes(self):
-        if isinstance(self.email_obj, CustomEmailAPI):
-            logging.warning('Wait for a message to your e-mail about instructions on how to set up the VPN!!!')
-            console_log('\nWait for a message to your e-mail about instructions on how to set up the VPN!!!', WARN, True, SILENT_MODE)
-            return None
+    def __press_button_with_text(self, text: str):
+        for button in self.driver.find_elements('tag name', 'button'):
+            if button.get_attribute('innerText').strip().lower() == text:
+                button.click()
+                break
+            time.sleep(0.05)
         else:
-            logging.info(f'[{self.email_obj.class_name}] VPN Codes interception...')
-            console_log(f'\n[{self.email_obj.class_name}] VPN Codes interception...', INFO, silent_mode=SILENT_MODE) # timeout 1.5m
-            if isinstance(self.email_obj, WEB_WRAPPER_EMAIL_APIS_CLASSES):
-                vpn_codes = parseVPNCodes(self.email_obj, self.driver, delay=2, max_iter=45)
-                self.driver.switch_to.window(self.window_handle)
-            else:
-                vpn_codes = parseVPNCodes(self.email_obj, self.driver, delay=2, max_iter=45) # 1secmail, developermail
-                logging.info('Information successfully received!')
-                console_log('Information successfully received!', OK, silent_mode=SILENT_MODE)
-        return vpn_codes
+            raise RuntimeError(f'Press button with text ({text}) error!!!')
+    
+    def __wait_text_on_page(self, text: str, max_iter = DEFAULT_MAX_ITER, delay = DEFAULT_DELAY):
+        for _ in range(max_iter):
+            if self.driver.page_source.find(text) != -1:
+                break
+            time.sleep(delay)
+        else:
+            raise RuntimeError('__wait_text_on_page error!!!')
 
 class EsetProtectHubRegister(object):
     def __init__(self, registered_email_obj: OneSecEmailAPI, eset_password: str, driver: Chrome):
@@ -344,14 +330,14 @@ class EsetProtectHubKeygen(object):
         exec_js(f'return {GET_EBID}("btn-login").click()')
         
         # Start free trial
-        uCE(self.driver, f'return {GET_EBID}("welcome-dialog-generate-trial-license") != null', delay=3)
+        uCE(self.driver, f'return {GET_EBID}("welcome-dialog-trial-link") != null', delay=3)
         logging.info('Successfully!')
         logging.info('Sending a request for a get license...')
         console_log('Successfully!', OK, silent_mode=SILENT_MODE)
         console_log('\nSending a request for a get license...', INFO, silent_mode=SILENT_MODE)
         try:
-            exec_js(f'return {GET_EBID}("welcome-dialog-generate-trial-license").click()')
-            exec_js(f'return {GET_EBID}("welcome-dialog-generate-trial-license")').click()
+            exec_js(f'return {GET_EBID}("welcome-dialog-trial-link").click()')
+            exec_js(f'return {GET_EBID}("welcome-dialog-trial-link")').click()
         except:
             pass
         
@@ -382,16 +368,19 @@ class EsetProtectHubKeygen(object):
         license_was_generated = False
         for _ in range(DEFAULT_MAX_ITER*10): # 5m
             try:
-                r = exec_js(f"return {GET_EBCN}('Toastify__toast-body toastBody')[0].innerText").lower()
-                if r.find('couldn\'t be generated') != -1:
-                    break
-                elif r.find('was generated') != -1:
-                    logging.info('Successfully!')
-                    console_log('Successfully!', OK, silent_mode=SILENT_MODE)
-                    license_was_generated = True
-                    break
+                alerts = exec_js(f"return {GET_EBCN}('Toastify__toast-body toastBody')")
+                for alert in alerts:
+                    if alert.text.find('couldn\'t be generated') != -1:
+                        break
+                    elif alert.text.find('was generated') != -1:
+                        logging.info('Successfully!')
+                        console_log('Successfully!', OK, silent_mode=SILENT_MODE)
+                        license_was_generated = True
+                        break
             except Exception as E:
                 pass
+            if license_was_generated:
+                break
             time.sleep(DEFAULT_DELAY)
 
         if not license_was_generated:
@@ -403,14 +392,14 @@ class EsetProtectHubKeygen(object):
         license_name = 'ESET PROTECT Advanced'
         try:
             self.driver.get('https://protecthub.eset.com/licenses')
-            uCE(self.driver, f'return {GET_EBAV}("div", "data-label", "license-list-body-cell-renderer-row-0-column-0").innerText != ""')
-            license_id = exec_js(f'{DEFINE_GET_EBAV_FUNCTION}\nreturn {GET_EBAV}("div", "data-label", "license-list-body-cell-renderer-row-0-column-0").innerText')
+            uCE(self.driver, f'return {GET_EBAV}("div", "data-label", "customer-licenses-list-body-cell-renderer-row-0-column-0").innerText != ""')
+            license_id = exec_js(f'{DEFINE_GET_EBAV_FUNCTION}\nreturn {GET_EBAV}("div", "data-label", "customer-licenses-list-body-cell-renderer-row-0-column-0").innerText')
             logging.info(f'License ID: {license_id}')
             logging.info('Getting information from the license...')
             console_log(f'License ID: {license_id}', OK, silent_mode=SILENT_MODE)
             console_log('\nGetting information from the license...', INFO, silent_mode=SILENT_MODE)
             self.driver.get(f'https://protecthub.eset.com/licenses/details/2/{license_id}/overview')
-            uCE(self.driver, f'return {GET_EBAV}("div", "data-label", "license-overview-validity-value") != null')
+            uCE(self.driver, f'return {GET_EBAV}("div", "data-label", "license-overview-key-value") != null')
             license_out_date = exec_js(f'{DEFINE_GET_EBAV_FUNCTION}\nreturn {GET_EBAV}("div", "data-label", "license-overview-validity-value").children[0].children[0].innerText')
             # Obtaining license key
             exec_js(f'{DEFINE_GET_EBAV_FUNCTION}\n{GET_EBAV}("div", "data-label", "license-overview-key-value").children[0].children[0].click()')
@@ -458,7 +447,7 @@ class EsetProtectHubKeygen(object):
         try:
             self.driver.execute_script(f'return {GET_EBID}("license-actions-button")').click()
             time.sleep(1)
-            button = self.driver.find_element('xpath', '//a[.//div[text()="Remove license"]]')
+            button = self.driver.find_element('xpath', '//a[.//span[text()="Remove subscription"]]')
             if button is not None:
                 button.click()
             untilConditionExecute(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBID}("remove-license-dlg-remove-btn"))', max_iter=15)
@@ -468,7 +457,7 @@ class EsetProtectHubKeygen(object):
                     self.driver.execute_script(f'return {GET_EBID}("remove-license-dlg-remove-btn")').click()
                 except:
                     pass
-                if self.driver.page_source.lower().find('to keep the solutions up to date') == -1:
+                if self.driver.page_source.lower().find('Subscription removed') == -1:
                     time.sleep(1)
                     logging.info('Key successfully deleted!!!')
                     console_log('Key successfully deleted!!!', OK, silent_mode=SILENT_MODE)
@@ -478,6 +467,56 @@ class EsetProtectHubKeygen(object):
             pass
         logging.error('Failed to delete key, this error has no effect on the operation of the key!!!')
         console_log('Failed to delete key, this error has no effect on the operation of the key!!!', ERROR, silent_mode=SILENT_MODE)
+
+# outdated code
+
+class EsetVPN(object):
+    def __init__(self, registered_email_obj: OneSecEmailAPI, driver: Chrome, EsetRegister_window_handle=None):
+        self.email_obj = registered_email_obj
+        self.driver = driver
+        self.window_handle = EsetRegister_window_handle
+        
+    def sendRequestForVPNCodes(self):
+        exec_js = self.driver.execute_script
+        uCE = untilConditionExecute
+        
+        logging.info('Sending a request for VPN subscriptions...')
+        console_log('\nSending a request for VPN subscriptions...', INFO, silent_mode=SILENT_MODE)
+        self.driver.get("https://home.eset.com/security-features")
+        try:
+            uCE(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBAV}("button", "data-label", "security-feature-explore-button"))', max_iter=10)
+        except:
+            raise RuntimeError('Explore-feature-button error!')
+        time.sleep(0.5)
+        for profile in exec_js(f'return {GET_EBAV}("button", "data-label", "choose-profile-tile-button", -1)'): # choose Me profile
+            if profile.get_attribute("innerText").find(self.email_obj.email) != -1: # Me profile contains an email address
+                profile.click()
+        uCE(self.driver, f'return {CLICK_WITH_BOOL}({GET_EBAV}("button", "data-label", "choose-profile-continue-btn"))', max_iter=5)
+        uCE(self.driver, f'return {GET_EBAV}("button", "data-label", "choose-device-counter-increment-button") != null', max_iter=10)
+        for _ in range(9): # increasing 'Number of devices' (to 10)
+            exec_js(f'{GET_EBAV}("button", "data-label", "choose-device-counter-increment-button").click()')
+        exec_js(f'{GET_EBAV}("button", "data-label", "choose-device-count-submit-button").click()')
+        uCE(self.driver, f'return {GET_EBAV}("button", "data-label", "pwm-instructions-sent-download-button") != null', max_iter=15)
+        logging.info('Request successfully sent!')
+        console_log('Request successfully sent!', OK, silent_mode=SILENT_MODE)
+        return True
+    
+    def getVPNCodes(self):
+        if isinstance(self.email_obj, CustomEmailAPI):
+            logging.warning('Wait for a message to your e-mail about instructions on how to set up the VPN!!!')
+            console_log('\nWait for a message to your e-mail about instructions on how to set up the VPN!!!', WARN, True, SILENT_MODE)
+            return None
+        else:
+            logging.info(f'[{self.email_obj.class_name}] VPN Codes interception...')
+            console_log(f'\n[{self.email_obj.class_name}] VPN Codes interception...', INFO, silent_mode=SILENT_MODE) # timeout 1.5m
+            if isinstance(self.email_obj, WEB_WRAPPER_EMAIL_APIS_CLASSES):
+                vpn_codes = parseVPNCodes(self.email_obj, self.driver, delay=2, max_iter=45)
+                self.driver.switch_to.window(self.window_handle)
+            else:
+                vpn_codes = parseVPNCodes(self.email_obj, self.driver, delay=2, max_iter=45) # 1secmail, developermail
+                logging.info('Information successfully received!')
+                console_log('Information successfully received!', OK, silent_mode=SILENT_MODE)
+        return vpn_codes
 
 def EsetVPNResetWindows(key_path='SOFTWARE\\ESET\\ESET VPN', value_name='authHash'):
     """Deletes the authHash value of ESET VPN"""
